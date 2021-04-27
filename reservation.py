@@ -1,9 +1,10 @@
-import requests
-import bs4 as bs4
-from splinter import Browser
+from selenium import webdriver
 import re
 import datetime
+from time import sleep
+from selenium.common.exceptions import NoSuchElementException
 
+PATH = '/usr/local/bin/chromedriver'
 regex = '^(\w|\.|\_|\-)+[@](\w|\_|\-|\.)+[.]\w{2,3}$'
 
 def check(email):
@@ -36,38 +37,107 @@ def ask_date():
     end_date = in_seven_days
     return end_date, True
 
+slot_template = '//*[@id="layout-content"]/div[2]/section/div[2]/div/div/div/div[2]/table/tbody/tr/td[{}]/div[{}]/button[{}]'
+esgesrgersgse = '//*[@id="layout-content"]/div[2]/section/div[2]/div/div/div/div[2]/table/tbody/tr/td[7]/div[1]/button[1]'
+esgesrgersgsr = '//*[@id="layout-content"]/div[2]/section/div[2]/div/div/div/div[2]/table/tbody/tr/td[7]/div[2]/button[4]'
+class Bot:
 
-class Bot(self, **info):
-    self.url = 'https://bge.agenda.ch/'
-    self.info = info
+    def __init__(self):
+        self.url = 'https://bge.agenda.ch/'
+        self.driver = webdriver.Chrome(PATH)
+        self.driver.get(self.url)
+        self.email = 'example@example.com'
 
 
-    def init_browser(self):
-        driver = self.info["driver"]
-        if driver == "geckodriver":
-            self.b = Browser()
+    def end(self):
+        self.driver.quit()
     
-    def step1(self):
-        r = requests.get("{}".format(self.url)).text
-        soup = bs4.BeautifulSoup(r, 'lxml')
-        #trouver le bon bouton!!!
+    def find_reserver_sdl(self):
+        self.driver.find_element_by_xpath('//*[@id="service-groups"]/div[2]').click()
+    
+    def enter_mail_and_confirm(self, last):
+        mail_form = '//*[@id="layout-content"]/div[2]/form/label/input'
+        continue_button = '//*[@id="layout-content"]/div[2]/form/div[2]/button'
+        accept1 = '//*[@id="layout-content"]/div[2]/form/div[2]/div[1]/label'
+        accept2 = '//*[@id="layout-content"]/div[2]/form/div[2]/div[2]/label'
+        confirm_button = '//*[@id="layout-content"]/div[2]/form/div[3]/button'
+        new_rdv = '//*[@id="layout-content"]/div[2]/div/a/button'
+
+        case = 1
+        # 2 cases: 
+        # 1 it already has you e-mail: only need to accept conditions
+        # 2 fill out the whole form
+        # we only handle case one for now
+
+        self.driver.find_element_by_xpath(mail_form).send_keys(self.email)
+
+        sleep(0.5)
+    
+        if case == 2:
+            self.case2()
+
+        self.driver.find_element_by_xpath(continue_button).click()
+        sleep(5)
+        self.driver.find_element_by_xpath(accept1).click()
+        sleep(0.5)
+        self.driver.find_element_by_xpath(accept2).click()
+        sleep(0.5)
+        self.driver.find_element_by_xpath(confirm_button).click()
+        sleep(5)
+        if not last:
+            self.driver.find_element_by_xpath(new_rdv).click()
+        
+
+    def case2(self):
+        return True
+
+    
+
+
+    def reserver_one_slot(self, day, half_day, time):
+        slot = slot_template.format(day, half_day, time)
+        self.driver.find_element_by_xpath(slot).click()
+        sleep(5)
+        self.enter_mail_and_confirm(False)
+
+
+
+    def reserver_all_slots(self):
+        for day in range(1,8):
+            for half_day in range(1,3):
+                if half_day == 1:
+                    t = 2
+                else:
+                    t = 4
+                for time in range (1,t+1):
+                    try:
+                        self.reserver_one_slot(day, half_day, time)
+                    except NoSuchElementException:
+                        print('Time slot unavailable :( Va falloir faire une fausse')
+        #then : need to navigate to next page
+
+
+
+
+
+    def main(self):
+        sleep(1)
+        self.find_reserver_sdl()
+        sleep(10)
+        self.reserver_all_slots()
+        sleep(5)
+        self.end()
 
 if __name__ == "__main__" :
 
-    email = ask_email()
+    """ email = ask_email()
     worked = False
     start_date = datetime.today()
     while not worked:
         start_date, worked = ask_date()
         if not worked:
             print("invalid date please start over")
+    """
 
-
-    INFO = {
-        "driver": "geckodriver",
-        "email": email,
-        "start_date": start_date
-    }
-
-    bot = Bot(**INFO)
+    bot = Bot()
     bot.main()
