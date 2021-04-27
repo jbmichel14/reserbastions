@@ -12,4 +12,5 @@ or
 ```
 pip install selenium
 ```
-then run it with python3 reservation.py
+then run it with 
+```python3 reservation.py```
