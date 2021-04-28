@@ -6,6 +6,12 @@ from selenium.common.exceptions import NoSuchElementException
 
 PATH = '/usr/local/bin/chromedriver'
 regex = '^(\w|\.|\_|\-)+[@](\w|\_|\-|\.)+[.]\w{2,3}$'
+slot_template = '//*[@id="layout-content"]/div[2]/section/div[2]/div/div/div/div[2]/table/tbody/tr/td[{}]/div[{}]/button[{}]'
+iframe_xpath = '/html/body/div[6]/div[1]/iframe'
+a_slot = '//*[@id="layout-content"]/div[2]/section/div[2]/div/div/div/div[2]/table/tbody/tr/td[6]/div[2]/button[3]'
+
+
+
 
 def check(email):
     if(re.search(regex, email)):
@@ -37,16 +43,13 @@ def ask_date():
     end_date = in_seven_days
     return end_date, True
 
-slot_template = '//*[@id="layout-content"]/div[2]/section/div[2]/div/div/div/div[2]/table/tbody/tr/td[{}]/div[{}]/button[{}]'
-esgesrgersgse = '//*[@id="layout-content"]/div[2]/section/div[2]/div/div/div/div[2]/table/tbody/tr/td[7]/div[1]/button[1]'
-esgesrgersgsr = '//*[@id="layout-content"]/div[2]/section/div[2]/div/div/div/div[2]/table/tbody/tr/td[7]/div[2]/button[4]'
 class Bot:
 
     def __init__(self):
         self.url = 'https://bge.agenda.ch/'
         self.driver = webdriver.Chrome(PATH)
         self.driver.get(self.url)
-        self.email = 'example@example.com'
+        self.email = 'jbm.nantck@gmail.com'
 
 
     def end(self):
@@ -54,8 +57,18 @@ class Bot:
     
     def find_reserver_sdl(self):
         self.driver.find_element_by_xpath('//*[@id="service-groups"]/div[2]').click()
+
+
+    def click_on_a_slot(self, slot):
+        #l = self.driver.find_elements_by_class_name('timeButton-0-2-82 ')
+        #t = '#layout-content > div:nth-child(2) > section > div.availabilityBox-0-2-71.box-0-2-25.cardBox-0-2-21.paddedBox-0-2-22 > div > div > div > div:nth-child(3) > table > tbody > tr > td:nth-child(3) > div:nth-child(2) > button:nth-child(3)'
+        #self.driver.find_elements_by_css_selector(t)[0].click()
+        #self.driver.find_element_by_id("root")
+        self.driver.switch_to.frame(frame_reference=self.driver.find_element_by_id("agenda_iframe"))
+        self.driver.find_element_by_xpath(slot).click()
+        print("found it")
     
-    def enter_mail_and_confirm(self, last):
+    def enter_mail_and_confirm(self, last=False):
         mail_form = '//*[@id="layout-content"]/div[2]/form/label/input'
         continue_button = '//*[@id="layout-content"]/div[2]/form/div[2]/button'
         accept1 = '//*[@id="layout-content"]/div[2]/form/div[2]/div[1]/label'
@@ -77,29 +90,26 @@ class Bot:
             self.case2()
 
         self.driver.find_element_by_xpath(continue_button).click()
-        sleep(5)
+        sleep(2)
         self.driver.find_element_by_xpath(accept1).click()
         sleep(0.5)
         self.driver.find_element_by_xpath(accept2).click()
         sleep(0.5)
         self.driver.find_element_by_xpath(confirm_button).click()
-        sleep(5)
-        if not last:
-            self.driver.find_element_by_xpath(new_rdv).click()
+        #sleep(0.5)
+        #if not last:
+            #self.driver.find_element_by_xpath(new_rdv).click()
         
 
     def case2(self):
         return True
 
     
-
-
     def reserver_one_slot(self, day, half_day, time):
         slot = slot_template.format(day, half_day, time)
         self.driver.find_element_by_xpath(slot).click()
         sleep(5)
         self.enter_mail_and_confirm(False)
-
 
 
     def reserver_all_slots(self):
@@ -117,16 +127,32 @@ class Bot:
         #then : need to navigate to next page
 
 
-
-
-
     def main(self):
         sleep(1)
         self.find_reserver_sdl()
-        sleep(10)
-        self.reserver_all_slots()
         sleep(5)
+        #self.reserver_all_slots()
+        self.click_on_a_slot(a_slot)
+        sleep(3)
+        self.enter_mail_and_confirm()
         self.end()
+
+
+def script():
+    for half_day in range(1,3):
+        if half_day == 1:
+            t = 2
+        else:
+            t = 4
+            for time in range (1,t+1):
+                try:
+                    slot = slot_template.format(7, half_day, time)
+                    bot = Bot(slot)
+                    bot.main()
+                        
+                except NoSuchElementException:
+                    print('Time slot unavailable :( Va falloir faire une fausse')
+
 
 if __name__ == "__main__" :
 
